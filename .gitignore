@@ -1,0 +1,7 @@
+.DS_Store
+src/__pycache__/
+.ipynb_checkpoints/
+venv/
+data/
+src/test.ipynb
+.env
