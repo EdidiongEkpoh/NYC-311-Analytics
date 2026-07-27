@@ -45,7 +45,7 @@ def load_checkpoint(checkpoint_file: Path):
     if not checkpoint_file.exists():
         return None
     with open(checkpoint_file) as f:
-        return json.load(f).get('last_created date')
+        return json.load(f).get('last_created_date')
 
 def save_checkpoint(checkpoint_file: Path, last_created_date: str):
     checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
