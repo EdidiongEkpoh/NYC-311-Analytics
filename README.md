@@ -41,12 +41,12 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. (An available option, but not a necessity) Get a free Socrata app token
-Register and sign in [here](https://data.cityofnewyork.us/signup), then go to `Developer Settings`, and 
-then click `Create New App Token` and paste it in as `SOCRATA_APP_TOKEN` in your .env. Without a
-token, requests work but share Socrata's throttled anonymous rate limit.
-(*Note*: The `Create New App Token` button was unresponsive for me as of July 25th, 2026. However, I have been 
-able to make calls to the API seamlessly without it.)
+### 2. (Recommended) Get a free Socrata app token
+Register and sign in [here](https://data.cityofnewyork.us/signup), then click on your display name in the top right corner of the screen 
+and go to `Developer Settings`, and then click `Create New App Token`, fill out the required information
+and copy and paste the `App Token` in as `SOCRATA_APP_TOKEN` in your .env file. 
+Without a token, requests work but share Socrata's throttled anonymous rate limit.
+(*Note*: Use an incognito window if the `Create New App Token` button is unresponsive in your browser.)
 
 ### 3. First run
 The very first run needs an explicit starting point. The full dataset
