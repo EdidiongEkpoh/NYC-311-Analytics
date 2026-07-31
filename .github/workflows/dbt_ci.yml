@@ -1,0 +1,38 @@
+name: dbt CI
+
+on:
+  push: 
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  dbt_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: create profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'PROFILE_EOF'
+          nyc311:
+            target: dev
+            outputs:
+                dev:
+                    type: duckdb
+                    path: "nyc_311.ci.duckdb"
+                    threads: 4
+          PROFILE_EOF
+
+      - name: dbt build
+        working-directory: dbt                
+        run: dbt build

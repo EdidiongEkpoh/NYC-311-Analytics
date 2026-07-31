@@ -1,0 +1,35 @@
+version: 2
+
+sources: 
+  - name: raw_311
+    description: Raw NYC 311 service data via Socrata Open Data API and written by src/ingest.py.
+
+    freshness: 
+      warn_after: {count: 30, period: hour}
+      error_after: {count: 48, period: hour}
+
+    meta:
+      external_location: "read_parquet('../data/raw/created_year=*/created_month=*/part.parquet', union_by_name=true)"
+
+    tables:
+      - name: service_requests
+        description: A service request per row, pulled via Socrata Open Data API
+        columns:
+          - name: unique_key
+            description: Unique identifier for the service request.
+            tests:
+              - not_null
+              - unique:
+                  config:
+                    severity: warn
+            
+          - name: created_date
+            description: Timestamp the request was created.  
+            tests:
+              - not_null
+              
+          - name: borough
+            description: NYC borough the request was filed in.
+          
+          - name: status
+            description: Current status of the request.

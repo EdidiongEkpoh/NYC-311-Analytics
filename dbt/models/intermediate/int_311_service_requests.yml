@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: int_311_service_requests
+    description: Staging model with response time and time-based derived field enhancements.
+    columns:
+      - name: response_time
+        description: Minutes between created_date and closed_date. Null for pending requests (null closed_date)
+      
+      - name: is_response_time_valid 
+        description: True when closed_date is persent and closed_date >= created_date
+      
+      - name: day_of_week
+        description: Weekday name that the request was created on.
+        arguments:
+          values: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      
+      - name: time_of_day
+        description: Time of day that the request was created on.
+        arguments:
+          values: ['Morning', 'Afternoon', 'Evening', 'Night']
+      
+      - name: is_weekend
+        description: True when the request was created on a Saturday or Sunday.

@@ -1,0 +1,18 @@
+name: nyc_311_analytics
+version: 1.0.0
+config-version: 2
+
+profile: nyc311
+
+model-paths: ['models']
+test-paths: ['tests']
+clean-targets: ['target', 'dbt_packages']
+
+models:
+  nyc_311_analytics:
+    staging:
+      +materialized: view 
+    intermediate:
+      +materialized: view
+    marts: 
+      +materialized: table
