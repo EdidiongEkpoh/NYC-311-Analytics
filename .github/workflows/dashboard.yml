@@ -47,7 +47,7 @@ jobs:
         run: dbt build
     
       - name: Copy data warehouse into Evidence source
-        run: cp dbt/nyc311_dev.duck db evidence/sources/nyc311/nyc311.duckdb
+        run: cp dbt/nyc311_dev.duckdb evidence/sources/nyc311/nyc311.duckdb
     
       - name: Set up Node.js
         uses: actions/setup-node@v4
