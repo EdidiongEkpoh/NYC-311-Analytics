@@ -1,0 +1,88 @@
+name: Build and deploy dashboard
+
+on:
+  push: 
+    branches: [main]
+  workflow_run:
+    workflows: ["dbt CI"]
+    types: [completed]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  
+jobs:
+  build:
+    # Skip if this was triggered by dbt CI failing so that we don't deploy a broken dashboard
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo 
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+    
+      - name: Install Python dependencies
+        run: |
+            pip install -r requirements.txt
+      
+      - name: Create dbt profile 
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'PROFILE_EOF'
+          nyc311:
+            target: dev
+            outputs: 
+              dev: 
+                type: duckdb
+                path: "nyc_311_dev.duckdb"
+                threads: 4
+          PROFILE_EOF
+      
+      - name: dbt build
+        working-directory: dbt 
+        run: dbt build
+    
+      - name: Copy data warehouse into Evidence source
+        run: cp dbt/nyc311_dev.duck db evidence/sources/nyc311/nyc311.duckdb
+    
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: evidence/package-lock.json
+    
+      - name: Install Evidence dependencies
+        working-directory: evidence
+        run: npm install
+      
+      - name: Extract sources and build site
+        working-directory: evidence
+        env:
+          BASE_PATH: "/${{ github.event.repository.name}}"
+        run: |
+          npm run sources
+          npm run build
+    
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "evidence/build/${{ github.event.repository.name }}"
+
+  deploy: 
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url}}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
