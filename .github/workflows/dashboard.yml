@@ -14,7 +14,7 @@ permissions:
 jobs:
   build:
     # Skip if this was triggered by dbt CI failing so that we don't deploy a broken dashboard
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success' }}
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo 
@@ -38,7 +38,7 @@ jobs:
             outputs: 
               dev: 
                 type: duckdb
-                path: "nyc_311_dev.duckdb"
+                path: "nyc311_dev.duckdb"
                 threads: 4
           PROFILE_EOF
       
