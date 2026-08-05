@@ -1,0 +1,4 @@
+name: nyc311
+type: duckdb
+options:
+  filename: nyc311.duckdb
