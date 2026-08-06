@@ -8,3 +8,4 @@ logs/
 dbt/target/
 dbt/logs/
 *.duckdb
+data/exports/

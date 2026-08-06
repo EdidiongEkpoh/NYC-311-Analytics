@@ -42,7 +42,7 @@ Full field definitions: [dataset's official data dictionary](https://data.cityof
 6. `dbt/models/staging/311_sources.yml` points directly at the committed Parquet via DuckDB's `read_parquet()`. The warehouse always reflects what's on the disk in the repo. A `freshness` check on this source also verifies the daily GitHub Action is still running.
 7. The staging model (`stg_311_service_requests`) deduplicates, casts types, and documents every column, with tests split by severity. It includes hard failures for data integrity problems (duplicate and/or null `unique_key`s), warnings for known and documented issues (`closed_date` occasionally preceding `created_date`).
 8. The intermediate model (`int_311_service_requests`) adds response time, day-of-week/time-of-day classifications, and an explicit `is_response_time_valid` flag. It keeps derived/analytical logic separate from the staging's raw data. The `is_response_time_valid` is used to judge the quality of an ingested row based on whether it has a faulty combination of `closed_date` and `created_date` (see #7) rather than just excluding it altogether.
-9. Four mart tables aggregate to the two analytical questions the project is built to provide insight into - geography (`mart_geo_borough.sql` and `mart_geo_community_board.sql`) and seasonality (`mart_time_monthly_volume.sql` and `mart_time_weekday_hour.sql`). These are pre-aggregated tables to support fast dashboard loading.
+9. Five mart tables that aggregate to provide detail about the geography (`mart_geo_borough.sql`, `mart_geo_borough_overall`, and `mart_geo_community_board.sql`) and seasonality (`mart_time_monthly_volume.sql` and `mart_time_weekday_hour.sql`) variables. 
 10. `.github/workflows/dbt_ci.yml` runs `dbt build` on every push so it catches changes that would break the pipeline instantly.
 
 
@@ -143,3 +143,70 @@ Unlike the ingestion workflow, **no repo secret is required**. The
 workflow generates its own `~/.dbt/profiles.yml` inline as a step, since
 nothing in it is sensitive. Trigger it manually from the Actions tab via
 `workflow_dispatch` to confirm it passes.
+
+## Setup / How to run (Dashboard)
+
+Assumes the dbt setup above is already done — the dashboard reads
+directly from the `.duckdb` file `dbt build` produces.
+
+### 1. Install Node.js (≥20)
+Evidence requires Node ≥18.13, 20, or 22. Check your version:
+```bash
+node -v
+```
+If it's below 20, `brew install node` (or `brew upgrade node` if your
+existing install came from Homebrew).
+
+### 2. Install dependencies
+```bash
+cd evidence
+npm install
+```
+
+### 3. Connect the data source
+Evidence reads a DuckDB file placed inside `evidence/sources/nyc311/`:
+```bash
+dbt build          # from dbt/, if not already done
+cp dbt/nyc311_dev.duckdb evidence/sources/nyc311/nyc311.duckdb
+npm run sources     # from evidence/ -- extracts each mart into Evidence's cache
+```
+
+### 4. Run locally
+```bash
+npm run dev
+```
+Opens the dashboard at `http://localhost:3000`.
+
+### 5. Automated deploy (GitHub Actions)
+`.github/workflows/dashboard.yml` runs the full chain above plus
+`npm run build` and a deploy to GitHub Pages automatically. Dependent on
+`dbt_ci.yml` succeeding first (so a broken dbt test blocks a broken
+dashboard from publishing). One-time setup required before this works:
+Settings -> Pages -> Source -> GitHub Actions.
+
+**[Live Dashboard →](https://edidiongekpoh.github.io/NYC-311-Analytics/)**
+
+
+## Exporting for Other BI Tools (Tableau, Power BI)
+
+`src/export_csv.py` exports every mart table — and, optionally, the
+intermediate model — to standalone CSV files in `data/exports/` (local
+only, gitignored). Not part of the automated pipeline; run manually
+whenever you actually need fresh CSVs for another tool.
+
+```bash
+python src/export_csv.py
+```
+
+**To also export the intermediate model** (`int_311__requests_enriched`,
+row-level, not aggregated): temporarily set
+`intermediate: +materialized: table` in `dbt/dbt_project.yml`, run
+`dbt build`, then run the export script.
+
+> **Revert `intermediate` back to `+materialized: view` immediately
+> after.** Leaving it as `table` isn't the project's intended state — a
+> view always reflects the current data; a table only updates when
+> explicitly rebuilt, meaning it can silently drift stale. It also grows
+> every `.duckdb` file this project produces (local, CI, and the
+> deployed dashboard's build) for no benefit to `dbt_ci.yml` or
+> `dashboard.yml`, since only the marts read the intermediate model directly.
