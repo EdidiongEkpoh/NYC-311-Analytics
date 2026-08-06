@@ -10,4 +10,4 @@ dbt-core>=1.7.0
 dbt-duckdb>=1.7.0
 
 # --- Exporting (src/export_csv.py) ---
-yaml>=6.0.0
+pyyaml>=6.0.0
