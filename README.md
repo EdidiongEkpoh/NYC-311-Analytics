@@ -1,7 +1,10 @@
 # NYC 311 Service Requests
 
 An end-to-end analytics project on NYC's 311 service request data
-that features a scheduled ingestion, a tested SQL transformation layer, and a live dashboard.
+that features a scheduled ingestion, a tested SQL transformation layer, optional CSV exports for external BI tools, 
+and a live dashboard via GitHub Pages.
+
+[Tableau Dashboard](https://public.tableau.com/app/profile/edidiong.ekpoh8227/viz/NYC311_Analytics/NYC311ServiceRequestsDashboard)
 
 **Problem Statement**: What Drives Response Time and Complaint Volume Across New York City?
 
